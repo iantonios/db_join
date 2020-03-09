@@ -1,6 +1,6 @@
 # This example illustrates SQLAlchemy functionality.  It's
 # intenteded to be run using the Flask shell, not as Flask
-# application since no routes are defined.  
+# application since no routes are defined.
 
 # Steps to run:
 # 1. export FLASK_APP=main.py
@@ -26,6 +26,7 @@ from flask import Flask
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+import random
 
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -62,25 +63,29 @@ def make_shell_context():
     return {'db': db, 'User': User, 'Post': Post}
 
 def add_users():
-    u1 = User(username='susan', email='susan@example.com')
-    u2 = User(username='joe', email='joe@example.com')
-    db.session.add(u1)
-    db.session.add(u2)
+
+    users = ['susan', 'rob', 'joe', 'jill', 'tom', 'jen', 'zoe']
+    emails_domains = ['@gmail.com', '@outlook.com', '@msn.com']
+
+    # add 10 random users
+    for i in range(10):
+        user = random.choice(users) + str(i)
+        domain = random.choice(emails_domains)
+        u = User(username=user, email=user+domain)
+        db.session.add(u)
+
     db.session.commit()
     return 'Done'
 
 def add_posts():
-    u = User.query.get(1)
-    p = Post(body='first post, susan', author=u)
-    db.session.add(p)
-    p = Post(body='second post, susan', author=u)
-    db.session.add(p)
+    # Add posts to 30 randomly selected users (a user can be selected
+    # more than once)
+    for i in range(30):
+        num = random.randint(1, 10)
+        u = User.query.get(num)
+        p = Post(body='post ' + str(i), author=u)
+        db.session.add(p)
 
-    u = User.query.get(2)
-    p = Post(body='first post, joe', author=u)
-    db.session.add(p)
-    p = Post(body='second post, joe', author=u)
-    db.session.add(p)
     db.session.commit()
     return 'Done'
 
@@ -92,7 +97,8 @@ def view_posts():
         print(row)
 
 def view_posts_filter():
-    results = db.session.query(User, Post).join(Post).filter(User.username=='susan')
+    username = input('Input username to look for: ')
+    results = db.session.query(User, Post).join(Post).filter(User.username==username)
     print('SQL Query: \n', results.statement.compile(dialect=db.session.bind.dialect))
     print('\n\nResults:')
     for row in results:
